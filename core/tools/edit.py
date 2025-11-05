@@ -1,6 +1,6 @@
 import os
 from typing import Dict, List, Any
-from models.tool_models import ToolResponse
+from ..models.tool_models import ToolResponse
 
 
 def edit_file_tool(file_path: str, old_str: str, new_str: str, replace_all: bool = False) -> ToolResponse:

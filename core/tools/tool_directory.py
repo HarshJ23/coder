@@ -1,4 +1,4 @@
-from prompts import (
+from ..prompts import (
     web_search_description,
     WRITE_TODOS_DESCRIPTION,
     READ_FILE_TOOL_DESCRIPTION ,
@@ -8,18 +8,19 @@ from prompts import (
     grep_tool_description,
     edit_file_tool_description
     )
-from tools.list import list_tool
-from tools.web_search import web_search_tool
-from tools.todo import write_todos
-from tools.file_tools import (
+from .list import list_tool
+from .web_search import web_search_tool
+from .todo import write_todos
+from .file_tools import (
 create_file_tool,
 write_file_tool,
 read_file_tool,
 create_directory
 )
-from tools.edit import edit_file_tool
-from tools.shell_tool import execute_shell_tool
-from tools.grep import grep_tool
+from .edit import edit_file_tool
+from .shell_tool import execute_shell_tool
+from .grep import grep_tool
+from .spawn_subagent import spawn_subagent
 
 
 
@@ -34,7 +35,8 @@ available_functions = {
         "edit_file_tool" : edit_file_tool,
         "execute_shell_tool" : execute_shell_tool,
         "list_tool" : list_tool,
-        "grep_tool" : grep_tool
+        "grep_tool" : grep_tool,
+        "spawn_subagent": spawn_subagent
 }
 
 
@@ -249,4 +251,50 @@ tools = [
         }
     }
 },
+{
+    "type": "function",
+    "function": {
+        "name": "spawn_subagent",
+        "description": """
+Use to create subagents for offloading specific and complex tasks , avoiding context overload on the main agent.
+-  Only use this tool if the task is complex or might result in high no. of tool call invocations.
+-  For creating subagent - based on task requirement choose the appropriate tools from the following list:
+   - web_search_tool 
+   - write_todos
+   - create_file_tool 
+   - write_file_tool
+   - read_file_tool
+   - create_directory
+   - edit_file_tool
+   - execute_shell_tool
+   - list_tool
+   - grep_tool
+""",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the subagent."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Overview and description of the task to be performed by the subagent."
+                },
+                "task": {
+                    "type": "string",
+                    "description": "Exact task to guide the subagent - may contain detailed implementation steps, research pointers based on your codebase understanding etc."
+                },
+                "tools_list": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Tool names from the list needed for the agent to perform the required task."
+                }
+            },
+            "required": ["name", "description", "task", "tools_list"]
+        }
+    }
+}
 ]

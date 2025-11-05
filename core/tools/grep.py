@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Dict, Any, List
-from models.tool_models import ToolResponse
+from ..models.tool_models import ToolResponse
 
 
 IGNORE_DIRS = [

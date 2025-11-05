@@ -203,6 +203,32 @@ Edits an existing file by replacing a specified string with a new one.
 - Useful for making precise changes to code or text files.
 """
 
+subagent_tool_desc = """
+Use to create subagents for offloading specific and complex tasks , avoiding context overload on the main agent.
+-  Only use this tool if the task is complex or might result in high no. of tool call invocations.
+-  For creating subagent - based on task requirement choose the appropriate tools from the following list:
+   - web_search_tool 
+   - write_todos
+   - create_file_tool 
+   - write_file_tool
+   - read_file_tool
+   - create_directory
+   - edit_file_tool
+   - execute_shell_tool
+   - list_tool
+   - grep_tool
+
+Example : the task is fixing the UI styling in a frontend dir of project and this task will require changes acorss multiple files then:
+         -  create a subagent specifically to handle this task
+         - input parameters : 
+                - name 
+                - description : Overview and description of the task to be performed by the subagent
+                - task : Exact task to guide the subagent - may contain detailed implementation steps , research pointers based on your codebase understanding etc.
+                - tools_list : Tool names from the above list needed for the agent to perform the required task.
+                
+
+"""
+
 AGENT_SYSTEM_PROMPT = """
 You are a coding agent running inside a Windows environment.  
 Your primary responsibility is to help users build, extend, and maintain software projects.  

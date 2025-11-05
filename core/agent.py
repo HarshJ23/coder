@@ -3,7 +3,7 @@ import os
 from exa_py import Exa
 from litellm import completion
 from dotenv import load_dotenv
-from tools.tool_directory import tools , available_functions
+from .tools.tool_directory import tools , available_functions
 from typing import Any
 
 
@@ -35,18 +35,39 @@ def calc_tokens(completion_tokens , prompt_tokens , total_tokens):
 
 
 class Coder:
-    def __init__(self, name,  system_prompt, model, agent_tools):
+    def __init__(self, name,  system_prompt, model, agent_tools): # max_content_utilization removed for now from def __init__()
         self.name = name
         self.messages = [{"role": "system", "content": system_prompt}]
         self.llm_model = model
         self.agent_tools = agent_tools
         self.token_usage = {"completion": 0, "prompt": 0, "total": 0}
+        # self.max_context_utilization = max_context_utilization
+        # self.context_window_size = self._get_model_context_size()
+        # self.compaction_count = 0
 
     def update_tokens(self, usage):
         """Update and display per-session token counters."""
         self.token_usage["completion"] += usage.completion_tokens
         self.token_usage["prompt"] += usage.prompt_tokens
         self.token_usage["total"] += usage.total_tokens
+    
+    # def _get_model_context_size(self):
+    #     """Map models to their context windows"""
+    #     context_sizes = {
+    #         "groq/llama-3.1-70b-versatile": 131072,
+    #         "groq/llama-3.3-70b-versatile": 131072,
+    #         "claude-sonnet-4": 200000,
+    #         # Add your models here
+    #     }
+    #     return context_sizes.get(self.llm_model, 128000)
+    
+    # def get_context_utilization(self):
+    #     """Calculate current context window usage percentage"""
+    #     return self.token_usage["total"] / self.context_window_size
+    
+    # def should_compact(self):
+    #     """Check if we should trigger compaction"""
+    #     return self.get_context_utilization() > self.max_context_utilization
 
     def run(self, user_query: str) -> Any:
         """Run the agent loop, yielding structured events instead of printing."""
@@ -143,6 +164,6 @@ class Coder:
                         "content": json.dumps(fresp.data),
                     }
                 )
-        print(self.messages)
+        # print(self.messages)
 
 

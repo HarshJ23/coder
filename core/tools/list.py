@@ -1,7 +1,7 @@
 import os
 import fnmatch
 from pathlib import Path
-from models.tool_models import ToolResponse
+from ..models.tool_models import ToolResponse
 
 IGNORE_PATTERNS = [
     "node_modules", "__pycache__", ".git", "dist", "build", "target",

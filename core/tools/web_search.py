@@ -1,7 +1,7 @@
 from exa_py import Exa
 import os
 from dotenv import load_dotenv
-from models.tool_models import ToolResponse
+from ..models.tool_models import ToolResponse
 
 load_dotenv()
 
