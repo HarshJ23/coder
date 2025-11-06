@@ -31,10 +31,17 @@ def calc_tokens(completion_tokens , prompt_tokens , total_tokens):
 # model = "groq/moonshotai/kimi-k2-instruct-0905"
 
 
+class BaseCoder:
+    def __init__(self, name, system_prompt, model, agent_tools):
+        self.name = name
+        self.system_prompt = system_prompt
+        self.model = model
+        self.agent_tools = agent_tools
 
 
 
-class Coder:
+
+class Coder(BaseCoder):
     def __init__(self, name,  system_prompt, model, agent_tools): # max_content_utilization removed for now from def __init__()
         self.name = name
         self.messages = [{"role": "system", "content": system_prompt}]

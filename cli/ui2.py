@@ -1,10 +1,11 @@
 import os
 import sys
+import msvcrt
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.prompt import Prompt
-import msvcrt
+from rich.markup import escape  # ✅ Correct way to escape Rich markup
 from core.agent import Coder
 from core.tools.tool_directory import tools
 from core.prompts import AGENT_SYSTEM_PROMPT
@@ -19,10 +20,14 @@ HEADER = """
 ╚██████╗╚██████╔╝██████╔╝███████╗██║  ██║
  ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
 Welcome to CODER !
- """
+"""
+
+# ----------------------------
+# File Selection Utilities
+# ----------------------------
 
 def select_files():
-    import os
+    """Interactive file selector for multi-file operations."""
     files = []
     for root, dirs, filenames in os.walk("."):
         for filename in filenames:
@@ -36,15 +41,16 @@ def select_files():
     selected = interactive_menu(files)
     return selected
 
+
 def interactive_menu(options):
+    """Simple keyboard-based file selector."""
     current_index = 0
     selected_indices = set()
     
     while True:
         console.clear()
         console.print("[bold blue]File Selector[/bold blue]")
-        console.print("Use ↑↓ to navigate, SPACE to select/deselect, ENTER to confirm, ESC to cancel")
-        console.print()
+        console.print("Use ↑↓ to navigate, SPACE to select/deselect, ENTER to confirm, ESC to cancel\n")
         
         for i, option in enumerate(options):
             marker = "→" if i == current_index else " "
@@ -52,55 +58,63 @@ def interactive_menu(options):
             style = "bold cyan" if i == current_index else ""
             console.print(f"{marker} {check} {option}", style=style)
         
-        console.print()
-        console.print(f"Selected: {len(selected_indices)} files")
+        console.print(f"\nSelected: {len(selected_indices)} files")
         
         # Wait for key press
         key = msvcrt.getch()
         
-        if key == b'\xe0':  # Special key prefix
+        if key == b'\xe0':  # Arrow key prefix
             key = msvcrt.getch()
             if key == b'H':  # Up arrow
                 current_index = (current_index - 1) % len(options)
             elif key == b'P':  # Down arrow
                 current_index = (current_index + 1) % len(options)
-        elif key == b' ':  # Space
+        elif key == b' ':  # Space bar toggles selection
             if current_index in selected_indices:
                 selected_indices.remove(current_index)
             else:
                 selected_indices.add(current_index)
-        elif key == b'\r':  # Enter
+        elif key == b'\r':  # Enter key
             return [options[i] for i in selected_indices]
-        elif key == b'\x1b':  # Escape
+        elif key == b'\x1b':  # Escape key
             return []
 
+
+# ----------------------------
+# Agent Initialization
+# ----------------------------
+
 def initialize_agent(project_path=".", model="groq/moonshotai/kimi-k2-instruct-0905"):
-    # Basic project scan (expand as needed)
+    """Initialize the main Coder agent."""
     abs_path = os.path.abspath(project_path)
     project_info = f"Project Path: {abs_path}, OS: {os.name}"
-    
-    # system_prompt = f"You are CODER, an AI coding assistant. {project_info}"
-    system_prompt  = AGENT_SYSTEM_PROMPT + f"project info : {project_info}"
+    system_prompt = AGENT_SYSTEM_PROMPT + f"project info : {project_info}"
     
     return Coder(name="Coder", system_prompt=system_prompt, model=model, agent_tools=tools)
+
+
+# ----------------------------
+# Main CLI Loop
+# ----------------------------
 
 def main():
     console.print(HEADER, style="bold blue")
     
-    # Get project path
+    # Get basic info
     project_path = Prompt.ask("Enter project path", default=".")
     model = Prompt.ask("Enter model (or press Enter for default)", default="groq/moonshotai/kimi-k2-instruct-0905")
     
+    # Initialize agent
     agent = initialize_agent(project_path, model)
-    
     console.print("\n[green]Agent initialized. Type your queries below. Type 'exit' to quit.[/green]\n")
     
     while True:
         query = Prompt.ask("You")
-        if query.lower() in ['exit', 'quit']:
+        if query.lower() in ["exit", "quit"]:
             console.print("[red]Goodbye![/red]")
             break
 
+        # File selector shortcut
         if query.strip() == "#":
             selected_paths = select_files()
             if selected_paths:
@@ -110,61 +124,62 @@ def main():
             else:
                 continue
         
-        # Show thinking status - simplified approach
+        # Run the agent
         try:
             with console.status("[bold green]CODER is thinking...[/bold green]", spinner="dots") as status:
                 response_started = False
                 
                 for event in agent.run(query):
-                    if event['type'] == 'llm_response':
-                        # Clear status and show response
+                    if event["type"] == "llm_response":
                         if not response_started:
                             response_started = True
-                            # Exit status context by stopping it
                             status.stop()
                             console.print("[bold blue]CODER:[/bold blue] ", end="")
                         
-                        content = event['data']['content']
+                        content = event["data"]["content"]
                         console.print(content, end="")
                         sys.stdout.flush()
-                    elif event['type'] == 'tool_call':
+                    
+                    elif event["type"] == "tool_call":
                         if not response_started:
                             response_started = True
                             status.stop()
                             console.print("[bold blue]CODER:[/bold blue] ", end="")
                         console.print(f"\n[dim]Using {event['data']['tool_name']}[/dim]")
-                    elif event['type'] == 'tool_response':
+                    
+                    elif event["type"] == "tool_response":
                         if not response_started:
                             response_started = True
                             status.stop()
                             console.print("[bold blue]CODER:[/bold blue] ", end="")
-                        tool_name = event['data']['tool_name']
-                        content = event['data']['content']
-                        if content:
-                            content = content[:100] + "..." if len(content) > 100 else content
-                        else:
-                            content = "No output"
+                        tool_name = event["data"]["tool_name"]
+                        content = event["data"]["content"] or "No output"
+                        if len(content) > 100:
+                            content = content[:100] + "..."
                         console.print(f"[dim]{tool_name}: {content}[/dim]")
-                    elif event['type'] == 'final_content':
-                        # Skip final_content - content is already displayed via llm_response
-                        break
-                    elif event['type'] == 'error':
+                    
+                    elif event["type"] == "final_content":
+                        break  # already shown
+                    
+                    elif event["type"] == "error":
                         if not response_started:
                             response_started = True
                             status.stop()
                             console.print("[bold blue]CODER:[/bold blue] ", end="")
-                        console.print(f"\n[red]Error:[/red] {event['data']['message']}")
-                    elif event['type'] == 'usage':
-                        pass  # Skip token display for cleaner UI
+                        console.print(f"\n[red]Error:[/red] {escape(event['data']['message'])}")
+                    
+                    elif event["type"] == "usage":
+                        pass  # hide token usage
                 
-                # New line after response
+                # Newline after output
                 if response_started:
                     console.print()
-                
-        except Exception as e:
-            console.print(f"[red]Error running agent: {str(e)}[/red]")
         
-        console.print()  # New line
+        except Exception as e:
+            console.print(f"[red]Error running agent:[/red] {escape(str(e))}")
+        
+        console.print()  # extra line between queries
+
 
 if __name__ == "__main__":
     main()
