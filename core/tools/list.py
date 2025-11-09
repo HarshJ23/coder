@@ -102,7 +102,7 @@ def list_tool(path: str = ".", ignore: list[str] = None):
 
     return ToolResponse(
         status="success",
-        data= f"{os.path.basename(search_path) : {output}}",
+        data=output,
         tool_name="list_tool"
     )
 

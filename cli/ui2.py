@@ -12,6 +12,10 @@ from core.prompts import AGENT_SYSTEM_PROMPT
 
 console = Console()
 
+# Default values (can be overridden by CLI)
+DEFAULT_PROJECT_PATH = "."
+DEFAULT_MODEL = "groq/moonshotai/kimi-k2-instruct-0905"
+
 HEADER = """
  ██████╗ ██████╗ ██████╗ ███████╗██████╗ 
 ██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔══██╗
@@ -98,15 +102,15 @@ def initialize_agent(project_path=".", model="groq/moonshotai/kimi-k2-instruct-0
 # ----------------------------
 
 def main():
-    console.print(HEADER, style="bold blue")
+    console.print(HEADER, style="bold magenta")
     
     # Get basic info
-    project_path = Prompt.ask("Enter project path", default=".")
-    model = Prompt.ask("Enter model (or press Enter for default)", default="groq/moonshotai/kimi-k2-instruct-0905")
+    project_path = Prompt.ask("Enter project path", default=DEFAULT_PROJECT_PATH)
+    model = Prompt.ask("Enter model (or press Enter for default)", default=DEFAULT_MODEL)
     
     # Initialize agent
     agent = initialize_agent(project_path, model)
-    console.print("\n[green]Agent initialized. Type your queries below. Type 'exit' to quit.[/green]\n")
+    console.print("\n[magenta]Agent initialized. Type your queries below. Type 'exit' to quit.[/magenta]\n")
     
     while True:
         query = Prompt.ask("You")
